@@ -1,18 +1,19 @@
 import torch
 
 
-# Optimized TreeLSTM implimentation.  It is very fast but hard to read the code.
 class TreeLSTM(torch.nn.Module):
+    """Optimized Tree-LSTM implementation"""
     def __init__(self, in_features, out_features):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
 
-        # bias is only on the W layers for efficiency
+        # bias terms are only on the W layers for efficiency
         self.W_iou = torch.nn.Linear(self.in_features, 3 * self.out_features)
         self.U_iou = torch.nn.Linear(self.out_features, 3 * self.out_features, bias=False)
 
-        # f terms are seperate from the iou terms because they involve sums over child nodes
+        # f terms are maintained seperate from the iou terms because they involve sums over child nodes
+        # while the iou terms do not
         self.W_f = torch.nn.Linear(self.in_features, self.out_features)
         self.U_f = torch.nn.Linear(self.out_features, self.out_features, bias=False)
 
@@ -25,7 +26,6 @@ class TreeLSTM(torch.nn.Module):
         device = next(self.parameters()).device
 
         # h and c states for every node in the batch
-        # stored as class members for ease of updating without passing h & c to _run_lstm() on each iteration
         h = torch.zeros(batch_size, self.out_features, device=device)
         c = torch.zeros(batch_size, self.out_features, device=device)
 
@@ -90,9 +90,9 @@ class TreeLSTM(torch.nn.Module):
 
         c[node_mask, :] = i * u
 
-        # At iteration 0 one of the nodes should have children
+        # At iteration 0 none of the nodes should have children
         # Otherwise, calculate the forget states for each parent node and child node
-        # and sun over the child memory cell states
+        # and sum over the child memory cell states
         if iteration > 0:
             # f is a tensor of size e x M
             f = self.W_f(features[parent_offsets, :]) + self.U_f(child_h)
