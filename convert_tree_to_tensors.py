@@ -4,14 +4,14 @@ import torch
 def _label_node_walk_order(node, n=0):
     node['index'] = n
     for child in node['children']:
-        n = n + 1
+        n += 1
         _label_node_walk_order(child, n)
 
 
-def _gather_features(node):
-    features = [node['features']]
+def _gather_node_attributes(node, key):
+    features = [node[key]]
     for child in node['children']:
-        features.extend([child['features']])
+        features.extend(_gather_node_attributes(child, key))
     return features
 
 
@@ -52,13 +52,15 @@ def convert_tree_to_tensors(tree, device):
     # This modifies the original tree as a side effect
     _label_node_walk_order(tree)
 
-    features = _gather_features(tree)
+    features = _gather_node_attributes(tree, 'features')
+    labels = _gather_node_attributes(tree, 'labels')
     node_evaluation_order = _gather_node_evaluation_order(tree)
     adjacency_list = _gather_adjacency_list(tree)
     edge_evaluation_order = _gather_edge_evaluation_order(tree)
 
     return {
         'features': torch.tensor(features, device=device, dtype=torch.float32),
+        'labels': torch.tensor(labels, device=device, dtype=torch.float32),
         'node_evaluation_order': torch.tensor(node_evaluation_order, device=device, dtype=torch.int64),
         'adjacency_list': torch.tensor(adjacency_list, device=device, dtype=torch.int64),
         'edge_evaluation_order': torch.tensor(edge_evaluation_order, device=device, dtype=torch.int64),
@@ -67,11 +69,10 @@ def convert_tree_to_tensors(tree, device):
 
 if __name__ == '__main__':
     tree = {
-        'features': [1, 0, 0, 0],
-        'children': [
-            {'features': [0, 1, 0, 0], 'children': []},
-            {'features': [0, 0, 1, 0], 'children': [
-                {'features': [0, 0, 0, 1], 'children': []}
+        'features': [1, 0, 0, 0], 'labels': [1], 'children': [
+            {'features': [0, 1, 0, 0], 'labels': [0], 'children': []},
+            {'features': [0, 0, 1, 0], 'labels': [0], 'children': [
+                {'features': [0, 0, 0, 1], 'labels': [0], 'children': []}
             ]},
         ],
     }
