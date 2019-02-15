@@ -17,7 +17,7 @@ class TreeLSTM(torch.nn.Module):
         self.W_f = torch.nn.Linear(self.in_features, self.out_features)
         self.U_f = torch.nn.Linear(self.out_features, self.out_features, bias=False)
 
-    def forward(self, features, node_evaluation_order, edge_evaluation_order, edge_offsets):
+    def forward(self, features, node_evaluation_order, adjacency_list, edge_evaluation_order):
 
         # Total number of nodes in every tree in the batch
         batch_size = node_evaluation_order.shape[0]
@@ -34,11 +34,11 @@ class TreeLSTM(torch.nn.Module):
 
         # populate the h and c states respecting computation order
         for n in range(node_evaluation_order.max() + 1):
-            self._run_lstm(n, h, c, h_sum, node_evaluation_order, edge_evaluation_order, features, edge_offsets)
+            self._run_lstm(n, h, c, h_sum, node_evaluation_order, edge_evaluation_order, features, adjacency_list)
 
         return h, c
 
-    def _run_lstm(self, iteration, h, c, h_sum, node_evaluation_order, edge_evaluation_order, features, edge_offsets):
+    def _run_lstm(self, iteration, h, c, h_sum, node_evaluation_order, edge_evaluation_order, features, adjacency_list):
         """
         """
         # N is the number of nodes in the tree
@@ -51,7 +51,7 @@ class TreeLSTM(torch.nn.Module):
         # node_evaluation_order is a tensor of size N x 1
         # edge_evaluation_order is a tensor of size E x 1
         # features is a tensor of size N x F
-        # edge_offsets is a tensor of size E x 2
+        # adjacency_list is a tensor of size E x 2
 
         # node_mask is a tensor of size N x 1
         node_mask = node_evaluation_order == iteration
@@ -65,21 +65,21 @@ class TreeLSTM(torch.nn.Module):
         # Otherwise, select the child nodes needed for current iteration
         # and sum over their hidden states
         if iteration > 0:
-            # edge_offsets is a tensor of size e x 2
-            edge_offsets = edge_offsets[edge_mask, :]
+            # adjacency_list is a tensor of size e x 2
+            adjacency_list = adjacency_list[edge_mask, :]
 
-            # parent_offsets and child_offsets are tensors of size e x 1
-            # parent_offsets and child_offsets contain the integer indexes needed to index into
+            # parent_indexes and child_indexes are tensors of size e x 1
+            # parent_indexes and child_indexes contain the integer indexes needed to index into
             # the feature and hidden state arrays to retrieve the data for those parent/child nodes.
-            parent_offsets = edge_offsets[:, 0]
-            child_offsets = edge_offsets[:, 1]
+            parent_indexes = adjacency_list[:, 0]
+            child_indexes = adjacency_list[:, 1]
 
             # child_h and child_c are tensors of size e x 1
-            child_h = h[child_offsets, :]
-            child_c = c[child_offsets, :]
+            child_h = h[child_indexes, :]
+            child_c = c[child_indexes, :]
 
             # Add child hidden states to parent offset locations
-            h_sum[parent_offsets, :] += h[child_offsets, :]
+            h_sum[parent_indexes, :] += h[child_indexes, :]
 
         # i, o and u are tensors of size n x M
         iou = self.W_iou(x) + self.U_iou(h_sum[node_mask, :])
@@ -95,13 +95,13 @@ class TreeLSTM(torch.nn.Module):
         # and sum over the child memory cell states
         if iteration > 0:
             # f is a tensor of size e x M
-            f = self.W_f(features[parent_offsets, :]) + self.U_f(child_h)
+            f = self.W_f(features[parent_indexes, :]) + self.U_f(child_h)
             f = torch.sigmoid(f)
 
             # fc is a tensor of size e x M
             fc = f * child_c
 
             # Add the calculated f values to the parent's memory cell state
-            c[parent_offsets, :] += fc
+            c[parent_indexes, :] += fc
 
         h[node_mask, :] = o * torch.tanh(c[node_mask])
