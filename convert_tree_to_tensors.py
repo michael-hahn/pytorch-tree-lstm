@@ -68,6 +68,7 @@ def convert_tree_to_tensors(tree, device):
 
 
 if __name__ == '__main__':
+    # Example usage
     tree = {
         'features': [1, 0, 0, 0], 'labels': [1], 'children': [
             {'features': [0, 1, 0, 0], 'labels': [0], 'children': []},
