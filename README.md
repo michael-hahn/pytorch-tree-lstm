@@ -3,7 +3,7 @@
 This repo contains a Pytorch implementation of the child-sum Tree-LSTM model
 ([Tai et al. 2015](https://arxiv.org/abs/1503.00075)) implimented with
 vectorized tree evaluation and batching.  This module has been tested with
-Pytorch 0.4.0 and 1.0.1.
+Python 3.6.6, Pytorch 0.4.0-1.0.1.
 
 ## Usage
 
