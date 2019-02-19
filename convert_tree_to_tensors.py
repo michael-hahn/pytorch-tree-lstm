@@ -47,7 +47,7 @@ def _gather_edge_evaluation_order(node):
     return adjacency_list
 
 
-def convert_tree_to_tensors(tree, device):
+def convert_tree_to_tensors(tree, device=torch.device('cpu')):
     # Label each node with its walk order to match nodes to feature tensor indexes
     # This modifies the original tree as a side effect
     _label_node_walk_order(tree)
@@ -78,7 +78,7 @@ if __name__ == '__main__':
         ],
     }
 
-    result = convert_tree_to_tensors(tree, torch.device('cpu'))
+    result = convert_tree_to_tensors(tree)
 
     for k, v in result.items():
         print(f'{k}:\n{v}\n')

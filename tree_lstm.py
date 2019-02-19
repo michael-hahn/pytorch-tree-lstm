@@ -34,12 +34,12 @@ class TreeLSTM(torch.nn.Module):
 
         # populate the h and c states respecting computation order
         for n in range(node_evaluation_order.max() + 1):
-            self._run_lstm(n, h, c, h_sum, node_evaluation_order, edge_evaluation_order, features, adjacency_list)
+            self._run_lstm(n, h, c, h_sum, features, node_evaluation_order, adjacency_list, edge_evaluation_order)
 
         return h, c
 
-    def _run_lstm(self, iteration, h, c, h_sum, node_evaluation_order, edge_evaluation_order, features, adjacency_list):
-        """
+    def _run_lstm(self, iteration, h, c, h_sum, features, node_evaluation_order, adjacency_list, edge_evaluation_order):
+        """Helper function to evaluate all tree nodes for the current iteration.
         """
         # N is the number of nodes in the tree
         # n is the number of nodes to be evaluated on in the current iteration
@@ -105,3 +105,42 @@ class TreeLSTM(torch.nn.Module):
             c[parent_indexes, :] += fc
 
         h[node_mask, :] = o * torch.tanh(c[node_mask])
+
+
+if __name__ == '__main__':
+    # Toy example
+    from convert_tree_to_tensors import convert_tree_to_tensors
+
+    tree = {
+        'features': [1, 0, 0, 0], 'labels': [1], 'children': [
+            {'features': [0, 1, 0, 0], 'labels': [0], 'children': []},
+            {'features': [0, 0, 1, 0], 'labels': [0], 'children': [
+                {'features': [0, 0, 0, 1], 'labels': [0], 'children': []}
+            ]},
+        ],
+    }
+
+    data = convert_tree_to_tensors(tree)
+
+    model = TreeLSTM(4, 1).train()
+
+    loss_function = torch.nn.BCEWithLogitsLoss()
+    optimizer = torch.optim.Adam(model.parameters())
+
+    for n in range(1000):
+        optimizer.zero_grad()
+
+        h, c = model(
+            data['features'],
+            data['node_evaluation_order'],
+            data['adjacency_list'],
+            data['edge_evaluation_order']
+        )
+
+        labels = data['labels']
+
+        loss = loss_function(h, labels)
+        loss.backward()
+        optimizer.step()
+
+        print(f'Iteration {n+1} Loss: {loss}')
