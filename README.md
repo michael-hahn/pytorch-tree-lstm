@@ -26,7 +26,8 @@ depends on nodes 1 and 2.  Doing this we reduce a four-node computation to three
 steps--trees experience performance gains from this approach proportional to the
 number of leaf nodes in the tree.
 
-To facilitate this approach we encode the Tree into four Tensors:
+To facilitate this approach we encode the Tree into four Tensors.  For a tree
+with N nodes, E edges, and F features:
 
 * `features` - A size N x F tensor containing the features for each node.
 * `node_evaluation_order` - A size N tensor containing the calculation step at which
@@ -36,8 +37,8 @@ parent node and child node for every connection in the tree.
 * `edge_evaluation_order` - A size E tensor containing the calculation step at which
 each child node should be summed.
 
-Example code generating these tensors for the example tree above is present in the
-`convert_tree_to_tensors.py` script.  The output of the script is:
+Example code generating these tensors for the four node example tree above is present
+in the `convert_tree_to_tensors.py` script.  The output of the script is:
 
 ```python
 features:
@@ -66,20 +67,9 @@ tensor([2, 2, 1])
 
 ## Usage
 
-The file `tree_list.py` contains the TreeLSTM module.  For a tree with N nodes,
-E edges, and F features, the TreeLSTM module expects tree input in the form of
-four tensors:
-
-* `features` - A size N x F tensor containing the features for each node.
-* `node_evaluation_order` - A size N tensor containing the evaluation step at which
-a node can be evaluated.
-* `adjacency_list` - A size E x 2 tensor containing the node indexes of the
-parent node and child node for every connection in the tree.
-* `edge_evaluation_order` - A size E tensor containing the evaluation step at which
-each child node should be summed.
-
-Example code for generating these arrays given a tree composed of Python dicts
-can be found in `convert_tree_to_tensors.py`.
+The file `tree_list.py` contains the TreeLSTM module.  The module accepts the
+`features`, `node_evaluation_order`, `adjacency_list`, `edge_evaluation_order`
+tensors detailed above as input.
 
 These tensors can be batched together by concatenation (`torch.cat()`) with the
 exception of the `adjacency_list`.  The `adjacency_list` contains indexes into
