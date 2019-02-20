@@ -3,7 +3,66 @@
 This repo contains a Pytorch implementation of the child-sum Tree-LSTM model
 ([Tai et al. 2015](https://arxiv.org/abs/1503.00075)) implimented with
 vectorized tree evaluation and batching.  This module has been tested with
-Python 3.6.6, Pytorch 0.4.0-1.0.1.
+Python 3.6.6, Pytorch 0.4.0, and Pytorch 1.0.1.
+
+## High-level Approach
+
+Efficient batching of tree data is complicated by the need to have evaluated all
+of a node's children before we can evaluate the node itself.  To minimize the
+performance impact of this issue, we break the node evaluation process into
+steps such that at each step we evaluate all nodes for which all child
+nodes have been previously evaluated.  This allows us to evaluate multiple nodes
+with each torch operation, increasing computation speeds by an order of magnitude
+over recursive computational approaches.
+
+As an example, consider the following tree:
+
+![tree](tree.png)
+
+On the first step of the tree calculation, we can evaluate nodes 1 & 3 in parallel
+as neither has any child nodes.  At the second step we are able to evaluate node
+2, as its child node 3 was evaluated previously.  Lastly we evaluate node 0, which
+depends on nodes 1 and 2.  Doing this we reduce a four-node computation to three
+steps--trees experience performance gains from this approach proportional to the
+number of leaf nodes in the tree.
+
+To facilitate this approach we encode the Tree into four Tensors:
+
+* `features` - A size N x F tensor containing the features for each node.
+* `node_evaluation_order` - A size N tensor containing the calculation step at which
+a node can be evaluated.
+* `adjacency_list` - A size E x 2 tensor containing the node indexes of the
+parent node and child node for every connection in the tree.
+* `edge_evaluation_order` - A size E tensor containing the calculation step at which
+each child node should be summed.
+
+Example code generating these tensors for the example tree above is present in the
+`convert_tree_to_tensors.py` script.  The output of the script is:
+
+```python
+features:
+tensor([[1., 0., 0., 0.],
+        [0., 1., 0., 0.],
+        [0., 0., 1., 0.],
+        [0., 0., 0., 1.]])
+
+labels:
+tensor([[1.],
+        [0.],
+        [0.],
+        [0.]])
+
+node_evaluation_order:
+tensor([2, 0, 1, 0])
+
+adjacency_list:
+tensor([[0, 1],
+        [0, 2],
+        [2, 3]])
+
+edge_evaluation_order:
+tensor([2, 2, 1])
+```
 
 ## Usage
 
@@ -12,12 +71,12 @@ E edges, and F features, the TreeLSTM module expects tree input in the form of
 four tensors:
 
 * `features` - A size N x F tensor containing the features for each node.
-* `node_evaluation_order` - A size N tensor containing the order in which
-nodes should be evaluated.
+* `node_evaluation_order` - A size N tensor containing the evaluation step at which
+a node can be evaluated.
 * `adjacency_list` - A size E x 2 tensor containing the node indexes of the
-features tensor for each pair of connected nodes in the tree.
-* `edge_evaluation_order` - A size E tensor containing the order in which edges
-should be evaluated.
+parent node and child node for every connection in the tree.
+* `edge_evaluation_order` - A size E tensor containing the evaluation step at which
+each child node should be summed.
 
 Example code for generating these arrays given a tree composed of Python dicts
 can be found in `convert_tree_to_tensors.py`.
