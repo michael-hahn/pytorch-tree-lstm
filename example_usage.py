@@ -1,6 +1,6 @@
 import torch
 
-from tree_lstm import TreeLSTM
+from treelstm import TreeLSTM
 
 
 def _label_node_walk_order(node, n=0):
@@ -72,17 +72,17 @@ def convert_tree_to_tensors(tree, device=torch.device('cpu')):
 if __name__ == '__main__':
     # Toy example
     tree = {
-        'features': [1, 0, 0, 0], 'labels': [1], 'children': [
-            {'features': [0, 1, 0, 0], 'labels': [0], 'children': []},
-            {'features': [0, 0, 1, 0], 'labels': [0], 'children': [
-                {'features': [0, 0, 0, 1], 'labels': [0], 'children': []}
+        'features': [1, 0], 'labels': [1], 'children': [
+            {'features': [0, 1], 'labels': [0], 'children': []},
+            {'features': [0, 0], 'labels': [0], 'children': [
+                {'features': [1, 1], 'labels': [0], 'children': []}
             ]},
         ],
     }
 
     data = convert_tree_to_tensors(tree)
 
-    model = TreeLSTM(4, 1).train()
+    model = TreeLSTM(2, 1).train()
 
     loss_function = torch.nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters())
