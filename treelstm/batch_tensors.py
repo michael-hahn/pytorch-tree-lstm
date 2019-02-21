@@ -1,7 +1,9 @@
 import torch
 
 
-def batch(batch):
+def batch_tree_input(batch):
+    """
+    """
     tree_sizes = [b['features'].shape[0] for b in batch]
 
     batched_features = torch.cat([b['features'] for b in batch])
@@ -24,5 +26,7 @@ def batch(batch):
     }
 
 
-def unbatch(tensor, tree_sizes):
+def unbatch_tree_tensor(tensor, tree_sizes):
+    """
+    """
     return torch.split(tensor, tree_sizes, dim=0)
