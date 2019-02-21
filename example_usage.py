@@ -104,6 +104,3 @@ if __name__ == '__main__':
         optimizer.step()
 
         print(f'Iteration {n+1} Loss: {loss}')
-
-    for k, v in data.items():
-        print(f'{k}:\n{v}\n')
