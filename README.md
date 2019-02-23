@@ -30,20 +30,28 @@ Tensors.  For a tree with N nodes, E edges, and F features, the required Tensors
 are:
 
 * `features` - A size N x F tensor containing the features for each node.
+* `adjacency_list` - A size E x 2 tensor containing the node indexes of the
+parent node and child node for every connection in the tree.
 * `node_evaluation_order` - A size N tensor containing the calculation step at which
 a node can be evaluated.  Note that the order that node data is stored in `features`
 and `node_evaluation_order` must be identical.
-* `adjacency_list` - A size E x 2 tensor containing the node indexes of the
-parent node and child node for every connection in the tree.
 * `edge_evaluation_order` - A size E tensor containing the calculation step at which
 each entry in the `adjacency_list` is needed in order to retrieve the child nodes
 for a current node.  Note that the order that parent-child data is stored in
 `adjacency_list` and `edge_evaluation_order` must be identical.
 
-Also note that `edge_evaluation_order` is redundant information derivable from the
-`adjacency_list` and `node_evaluation_order`; however, precomputing this order
-gives a significant performance improvement due to the current lack of an efficient
-set intersection function in PyTorch 1.0.
+`node_evaluation_order` and `edge_evaluation_order` hold redundant information
+derivable from the `adjacency_list` and `features`; however, but precomputing
+these tensors gives a significant performance improvement due to the current
+lack of an efficient set intersection function in PyTorch 1.0.  The order
+tensors can be generated using the `treelstm.calculate_evaluation_orders`
+function.  `calculate_evaluation_orders` accepts the `adjacency_list` tensor
+and the length of the features tensor and returns the two order tensors:
+
+```python
+import treelstm
+node_evaluation_order, edge_evaluation_order = treelstm.calculate_evaluation_orders(adjacency_list, len(features))
+```
 
 The tensor representation of the example tree above would be:
 
@@ -53,11 +61,11 @@ features: tensor([[1., 0.],
                   [0., 0.],
                   [1., 1.]])
 
-node_evaluation_order: tensor([2, 0, 1, 0])
-
 adjacency_list: tensor([[0, 1],
                         [0, 2],
                         [2, 3]])
+
+node_evaluation_order: tensor([2, 0, 1, 0])
 
 edge_evaluation_order: tensor([2, 2, 1])
 ```
@@ -95,7 +103,7 @@ containing fields `features`, `node_evaluation_order`, `adjacency_list`, and
 with the individual dictionaries in the list concatenated together and the
 `adjacency_list` indexes adjusted, as well as a `tree_sizes` list storing the
 size of each tree in the batch.  Given a PyTorch
-[`Dataset()`](https://pytorch.org/docs/stable/data.html#torch.utils.data.Dataset)
+[`Dataset`](https://pytorch.org/docs/stable/data.html#torch.utils.data.Dataset)
 object that returns tree data as a dictionary of tensors with the above keys,
 `treelstm.batch_tree_input` is suitable for use as a `collate_fn` argument to
 the PyTorch

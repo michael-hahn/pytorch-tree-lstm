@@ -44,12 +44,6 @@ class TreeLSTM(torch.nn.Module):
           ``h_n.view(num_layers, num_directions, batch, hidden_size)`` and similarly for *c_n*.
         - **c** of shape `(num_layers * num_directions, batch, hidden_size)`: tensor
           containing the cell state for `t = seq_len`.
-    Examples::
-        >>> model = TreeLSTM(20, 10)
-        >>> input = torch.randn(5, 3, 10)
-        >>> h0 = torch.randn(2, 3, 20)
-        >>> c0 = torch.randn(2, 3, 20)
-        >>> h, c = model(features, input, (h0, c0))
     """
     def __init__(self, in_features, out_features):
         super().__init__()
@@ -66,17 +60,20 @@ class TreeLSTM(torch.nn.Module):
         self.U_f = torch.nn.Linear(self.out_features, self.out_features, bias=False)
 
     def forward(self, features, node_evaluation_order, adjacency_list, edge_evaluation_order):
-        r"""Computes the gradient of current tensor w.r.t. graph leaves.
+        r"""Applies a Child-Sum Tree LSTM to an input Tree structure and features defined by
         The graph is differentiated using the chain rule. If the tensor is
-        Arguments:
-            features (Tensor): Gradient w.r.t. the
-                tensor. If it is a tensor, it will be automatically converted
-            node_evaluation_order (Tensor): If ``False``, the graph used to compute
+        Inputs: features, node_evaluation_order, adjacency_list, edge_evaluation_order
+            - features of shape(num_nodes, num_in_features): tensor containing 
+                features for each node in the trees in the batch.
+            - node_evaluation_order (Tensor): If ``False``, the graph used to compute
                 the grads will be freed. Note that in nearly all cases setting
-            adjacency_list (Tensor): If ``False``, the graph used to compute
+            - adjacency_list (Tensor): If ``False``, the graph used to compute
                 the grads will be freed. Note that in nearly all cases setting
-            edge_evaluation_order (Tensor): If ``False``, the graph used to compute
+            - edge_evaluation_order (Tensor): If ``False``, the graph used to compute
                 the grads will be freed. Note that in nearly all cases setting
+        Outputs:
+            h (Tensor): hidden state
+            c (Tensor): cell state
         """
 
         # Total number of nodes in every tree in the batch

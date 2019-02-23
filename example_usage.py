@@ -1,13 +1,13 @@
 import torch
 
-from treelstm import TreeLSTM
+from treelstm import TreeLSTM, calculate_evaluation_orders
 
 
-def _label_node_walk_order(node, n=0):
+def _label_node_index(node, n=0):
     node['index'] = n
     for child in node['children']:
         n += 1
-        _label_node_walk_order(child, n)
+        _label_node_index(child, n)
 
 
 def _gather_node_attributes(node, key):
@@ -26,39 +26,16 @@ def _gather_adjacency_list(node):
     return adjacency_list
 
 
-def _find_order(node):
-    order = 0
-    for child in node['children']:
-        order = max(order, _find_order(child) + 1)
-    return order
-
-
-def _gather_node_evaluation_order(node):
-    node_evaluation_order = [_find_order(node)]
-    for child in node['children']:
-        node_evaluation_order.extend(_gather_node_evaluation_order(child))
-    return node_evaluation_order
-
-
-def _gather_edge_evaluation_order(node):
-    adjacency_list = []
-    for child in node['children']:
-        # edges should be evaluated in the same order as their parent node
-        adjacency_list.append(_find_order(node))
-        adjacency_list.extend(_gather_edge_evaluation_order(child))
-    return adjacency_list
-
-
 def convert_tree_to_tensors(tree, device=torch.device('cpu')):
     # Label each node with its walk order to match nodes to feature tensor indexes
     # This modifies the original tree as a side effect
-    _label_node_walk_order(tree)
+    _label_node_index(tree)
 
     features = _gather_node_attributes(tree, 'features')
     labels = _gather_node_attributes(tree, 'labels')
-    node_evaluation_order = _gather_node_evaluation_order(tree)
     adjacency_list = _gather_adjacency_list(tree)
-    edge_evaluation_order = _gather_edge_evaluation_order(tree)
+
+    node_evaluation_order, edge_evaluation_order = calculate_evaluation_orders(adjacency_list, len(features))
 
     return {
         'features': torch.tensor(features, device=device, dtype=torch.float32),
@@ -104,3 +81,4 @@ if __name__ == '__main__':
         optimizer.step()
 
         print(f'Iteration {n+1} Loss: {loss}')
+    print(data)
