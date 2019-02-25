@@ -2,49 +2,6 @@ import torch
 
 
 class TreeLSTM(torch.nn.Module):
-    r"""Pytorch TreeLSTM model Applies a multi-layer long short-term memory (LSTM) RNN to an input
-    sequence.
-    For each element in the input sequence, each layer computes the following
-    function:
-    .. math::
-        \begin{array}{ll} \\
-            i_t = \sigma(W_{ii} x_t + b_{ii} + W_{hi} h_{(t-1)} + b_{hi}) \\
-            f_t = \sigma(W_{if} x_t + b_{if} + W_{hf} h_{(t-1)} + b_{hf}) \\
-            g_t = \tanh(W_{ig} x_t + b_{ig} + W_{hg} h_{(t-1)} + b_{hg}) \\
-            o_t = \sigma(W_{io} x_t + b_{io} + W_{ho} h_{(t-1)} + b_{ho}) \\
-            c_t = f_t * c_{(t-1)} + i_t * g_t \\
-            h_t = o_t * \tanh(c_t) \\
-        \end{array}
-    where :math:`h_t` is the hidden state at time `t`, :math:`c_t` is the cell
-    state at time `t`, :math:`x_t` is the input at time `t`, :math:`h_{(t-1)}`
-    is the hidden state of the layer at time `t-1` or the initial hidden
-    state at time `0`, and :math:`i_t`, :math:`f_t`, :math:`g_t`,
-    :math:`o_t` are the input, forget, cell, and output gates, respectively.
-    :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product.
-    In a multilayer LSTM, the input :math:`x^{(l)}_t` of the :math:`l` -th layer
-    (:math:`l >= 2`) is the hidden state :math:`h^{(l-1)}_t` of the previous layer multiplied by
-    dropout :math:`\delta^{(l-1)}_t` where each :math:`\delta^{(l-1)}_t` is a Bernoulli random
-    variable which is :math:`0` with probability :attr:`dropout`.
-    Args:
-        in_features: The number of expected features in the input `x`
-        out_features: The number of features in the hidden state `h`
-    Inputs: features, node_evaluation_order, adjacency_list, edge_evaluation_order
-        - **features** of shape `(seq_len, batch, input_size)`: tensor containing the features
-          of the input sequence.
-        - **node_evaluation_order** of shape `(num_layers * num_directions, batch, hidden_size)`: tensor
-          containing the initial hidden state for each element in the batch.
-        - **adjacency_list** of shape `(num_layers * num_directions, batch, hidden_size)`: tensor
-          containing the initial cell state for each element in the batch.
-        - **edge_evaluation_order** of shape `(num_layers * num_directions, batch, hidden_size)`: tensor
-          containing the initial cell state for each element in the batch.
-    Outputs: h, c
-        - **h** of shape `(num_layers * num_directions, batch, hidden_size)`: tensor
-          containing the hidden state for `t = seq_len`.
-          Like *output*, the layers can be separated using
-          ``h_n.view(num_layers, num_directions, batch, hidden_size)`` and similarly for *c_n*.
-        - **c** of shape `(num_layers * num_directions, batch, hidden_size)`: tensor
-          containing the cell state for `t = seq_len`.
-    """
     def __init__(self, in_features, out_features):
         super().__init__()
         self.in_features = in_features
@@ -60,21 +17,6 @@ class TreeLSTM(torch.nn.Module):
         self.U_f = torch.nn.Linear(self.out_features, self.out_features, bias=False)
 
     def forward(self, features, node_evaluation_order, adjacency_list, edge_evaluation_order):
-        r"""Applies a Child-Sum Tree LSTM to an input Tree structure and features defined by
-        The graph is differentiated using the chain rule. If the tensor is
-        Inputs: features, node_evaluation_order, adjacency_list, edge_evaluation_order
-            - features of shape(num_nodes, num_in_features): tensor containing 
-                features for each node in the trees in the batch.
-            - node_evaluation_order (Tensor): If ``False``, the graph used to compute
-                the grads will be freed. Note that in nearly all cases setting
-            - adjacency_list (Tensor): If ``False``, the graph used to compute
-                the grads will be freed. Note that in nearly all cases setting
-            - edge_evaluation_order (Tensor): If ``False``, the graph used to compute
-                the grads will be freed. Note that in nearly all cases setting
-        Outputs:
-            h (Tensor): hidden state
-            c (Tensor): cell state
-        """
 
         # Total number of nodes in every tree in the batch
         batch_size = node_evaluation_order.shape[0]
