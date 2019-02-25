@@ -36,8 +36,6 @@ def calculate_evaluation_orders(adjacency_list, tree_size):
 
 
 def batch_tree_input(batch):
-    """
-    """
     tree_sizes = [b['features'].shape[0] for b in batch]
 
     batched_features = torch.cat([b['features'] for b in batch])
@@ -61,6 +59,4 @@ def batch_tree_input(batch):
 
 
 def unbatch_tree_tensor(tensor, tree_sizes):
-    """
-    """
     return torch.split(tensor, tree_sizes, dim=0)
