@@ -41,7 +41,7 @@ for a current node.  Note that the order that parent-child data is stored in
 `adjacency_list` and `edge_evaluation_order` must be identical.
 
 `node_evaluation_order` and `edge_evaluation_order` hold redundant information
-derivable from the `adjacency_list` and `features`; however, but precomputing
+derivable from the `adjacency_list` and `features`; however, precomputing
 these tensors gives a significant performance improvement due to the current
 lack of an efficient set intersection function in PyTorch 1.0.  The order
 tensors can be generated using the `treelstm.calculate_evaluation_orders`
