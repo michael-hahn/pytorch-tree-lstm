@@ -1,8 +1,20 @@
+"""
+PyTorch Child-Sum Tree LSTM model
+
+See Tai et al. 2015 https://arxiv.org/abs/1503.00075 for model description.
+"""
+
 import torch
 
 
 class TreeLSTM(torch.nn.Module):
+    '''PyTorch TreeLSTM model that implements efficient batching.
+    '''
     def __init__(self, in_features, out_features):
+        '''TreeLSTM class initializer
+
+        Takes in int sizes of in_features and out_features and sets up model Linear network layers.
+        '''
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
@@ -17,6 +29,11 @@ class TreeLSTM(torch.nn.Module):
         self.U_f = torch.nn.Linear(self.out_features, self.out_features, bias=False)
 
     def forward(self, features, node_evaluation_order, adjacency_list, edge_evaluation_order):
+        '''Run TreeLSTM model on a tree data structure with node features
+
+        Takes Tensors encoding node features, a tree node adjacency_list, and graph processing in
+        node_evaluation_order and edge_evaluation_order.
+        '''
 
         # Total number of nodes in every tree in the batch
         batch_size = node_evaluation_order.shape[0]
@@ -38,8 +55,8 @@ class TreeLSTM(torch.nn.Module):
         return h, c
 
     def _run_lstm(self, iteration, h, c, h_sum, features, node_evaluation_order, adjacency_list, edge_evaluation_order):
-        # Helper function to evaluate all tree nodes for the current iteration.
-
+        '''Helper function to evaluate all tree nodes currently able to be evaluated.
+        '''
         # N is the number of nodes in the tree
         # n is the number of nodes to be evaluated on in the current iteration
         # E is the number of edges in the tree
