@@ -32,15 +32,15 @@ are:
 * `features` - A size N x F tensor containing the features for each node.
 * `adjacency_list` - A size E x 2 tensor containing the node indexes of the
 parent node and child node for every connection in the tree.
-* `node_evaluation_order` - A size N tensor containing the calculation step at which
+* `node_order` - A size N tensor containing the calculation step at which
 a node can be evaluated.  Note that the order that node data is stored in `features`
-and `node_evaluation_order` must be identical.
-* `edge_evaluation_order` - A size E tensor containing the calculation step at which
+and `node_order` must be identical.
+* `edge_order` - A size E tensor containing the calculation step at which
 each entry in the `adjacency_list` is needed in order to retrieve the child nodes
 for a current node.  Note that the order that parent-child data is stored in
-`adjacency_list` and `edge_evaluation_order` must be identical.
+`adjacency_list` and `edge_order` must be identical.
 
-`node_evaluation_order` and `edge_evaluation_order` hold redundant information
+`node_order` and `edge_order` hold redundant information
 derivable from the `adjacency_list` and `features`; however, precomputing
 these tensors gives a significant performance improvement due to the current
 lack of an efficient set intersection function in PyTorch 1.0.  The order
@@ -50,7 +50,7 @@ and the length of the features tensor and returns the two order tensors:
 
 ```python
 import treelstm
-node_evaluation_order, edge_evaluation_order = treelstm.calculate_evaluation_orders(adjacency_list, len(features))
+node_order, edge_order = treelstm.calculate_evaluation_orders(adjacency_list, len(features))
 ```
 
 The tensor representation of the example tree above would be:
@@ -65,9 +65,9 @@ adjacency_list: tensor([[0, 1],
                         [0, 2],
                         [2, 3]])
 
-node_evaluation_order: tensor([2, 0, 1, 0])
+node_order: tensor([2, 0, 1, 0])
 
-edge_evaluation_order: tensor([2, 2, 1])
+edge_order: tensor([2, 2, 1])
 ```
 
 ## Installation
@@ -87,7 +87,7 @@ import treelstm
 ## Usage
 
 The file `tree_list.py` contains the TreeLSTM module.  The module accepts the
-`features`, `node_evaluation_order`, `adjacency_list`, `edge_evaluation_order`
+`features`, `node_order`, `adjacency_list`, `edge_order`
 tensors detailed above as input.
 
 These tensors can be batched together by concatenation (`torch.cat()`) with the
@@ -98,8 +98,8 @@ new position of the features in the batched tensors.
 
 The `treelstm.batch_tree_input` function is provided to do this concatenation
 and adjustment.  `treelstm.batch_tree_input` accepts a list of dictionaries
-containing fields `features`, `node_evaluation_order`, `adjacency_list`, and
-`edge_evaluation_order` and returns a dictionary containing those same fields
+containing fields `features`, `node_order`, `adjacency_list`, and
+`edge_order` and returns a dictionary containing those same fields
 with the individual dictionaries in the list concatenated together and the
 `adjacency_list` indexes adjusted, as well as a `tree_sizes` list storing the
 size of each tree in the batch.  Given a PyTorch

@@ -1,8 +1,17 @@
+'''Helper functions for running the TreeLSTM model
+'''
+
 import numpy
 import torch
 
 
 def calculate_evaluation_orders(adjacency_list, tree_size):
+    '''Calculates the node_order and edge_order from a tree adjacency_list and the tree_size.
+
+    The TreeLSTM model requires node_order and edge_order to be passed into the model along
+    with the node features and adjacency_list.  We pre-calculate these orders as a speed
+    optimization.
+    '''
     adjacency_list = numpy.array(adjacency_list)
 
     node_ids = numpy.arange(tree_size, dtype=int)
@@ -36,11 +45,16 @@ def calculate_evaluation_orders(adjacency_list, tree_size):
 
 
 def batch_tree_input(batch):
+    '''Combines a batch of tree dictionaries into a single batched dictionary for use by the TreeLSTM model.
+
+    batch - list of dicts with keys ('features', 'node_order', 'edge_order', 'adjacency_list')
+    returns a dict with keys ('features', 'node_order', 'edge_order', 'adjacency_list', 'tree_sizes')
+    '''
     tree_sizes = [b['features'].shape[0] for b in batch]
 
     batched_features = torch.cat([b['features'] for b in batch])
-    batched_node_evaluation_order = torch.cat([b['node_evaluation_order'] for b in batch])
-    batched_edge_evaluation_order = torch.cat([b['edge_evaluation_order'] for b in batch])
+    batched_node_order = torch.cat([b['node_order'] for b in batch])
+    batched_edge_order = torch.cat([b['edge_order'] for b in batch])
 
     batched_adjacency_list = []
     offset = 0
@@ -51,12 +65,16 @@ def batch_tree_input(batch):
 
     return {
         'features': batched_features,
-        'node_evaluation_order': batched_node_evaluation_order,
-        'edge_evaluation_order': batched_edge_evaluation_order,
+        'node_order': batched_node_order,
+        'edge_order': batched_edge_order,
         'adjacency_list': batched_adjacency_list,
         'tree_sizes': tree_sizes
     }
 
 
 def unbatch_tree_tensor(tensor, tree_sizes):
+    '''Convenience functo to unbatch a batched tree tensor into individual tensors given an array of tree_sizes.
+
+    sum(tree_sizes) must equal the size of tensor's zeroth dimension.
+    '''
     return torch.split(tensor, tree_sizes, dim=0)

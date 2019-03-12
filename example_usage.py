@@ -35,14 +35,14 @@ def convert_tree_to_tensors(tree, device=torch.device('cpu')):
     labels = _gather_node_attributes(tree, 'labels')
     adjacency_list = _gather_adjacency_list(tree)
 
-    node_evaluation_order, edge_evaluation_order = calculate_evaluation_orders(adjacency_list, len(features))
+    node_order, edge_order = calculate_evaluation_orders(adjacency_list, len(features))
 
     return {
         'features': torch.tensor(features, device=device, dtype=torch.float32),
         'labels': torch.tensor(labels, device=device, dtype=torch.float32),
-        'node_evaluation_order': torch.tensor(node_evaluation_order, device=device, dtype=torch.int64),
+        'node_order': torch.tensor(node_order, device=device, dtype=torch.int64),
         'adjacency_list': torch.tensor(adjacency_list, device=device, dtype=torch.int64),
-        'edge_evaluation_order': torch.tensor(edge_evaluation_order, device=device, dtype=torch.int64),
+        'edge_order': torch.tensor(edge_order, device=device, dtype=torch.int64),
     }
 
 
@@ -69,9 +69,9 @@ if __name__ == '__main__':
 
         h, c = model(
             data['features'],
-            data['node_evaluation_order'],
+            data['node_order'],
             data['adjacency_list'],
-            data['edge_evaluation_order']
+            data['edge_order']
         )
 
         labels = data['labels']

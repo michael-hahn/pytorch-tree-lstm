@@ -28,15 +28,15 @@ class TreeLSTM(torch.nn.Module):
         self.W_f = torch.nn.Linear(self.in_features, self.out_features)
         self.U_f = torch.nn.Linear(self.out_features, self.out_features, bias=False)
 
-    def forward(self, features, node_evaluation_order, adjacency_list, edge_evaluation_order):
+    def forward(self, features, node_order, adjacency_list, edge_order):
         '''Run TreeLSTM model on a tree data structure with node features
 
-        Takes Tensors encoding node features, a tree node adjacency_list, and graph processing in
-        node_evaluation_order and edge_evaluation_order.
+        Takes Tensors encoding node features, a tree node adjacency_list, and the order in which 
+        the tree processing should proceed in node_order and edge_order.
         '''
 
         # Total number of nodes in every tree in the batch
-        batch_size = node_evaluation_order.shape[0]
+        batch_size = node_order.shape[0]
 
         # Retrive device the model is currently loaded on to generate h, c, and h_sum result buffers
         device = next(self.parameters()).device
@@ -49,12 +49,12 @@ class TreeLSTM(torch.nn.Module):
         h_sum = torch.zeros(batch_size, self.out_features, device=device)
 
         # populate the h and c states respecting computation order
-        for n in range(node_evaluation_order.max() + 1):
-            self._run_lstm(n, h, c, h_sum, features, node_evaluation_order, adjacency_list, edge_evaluation_order)
+        for n in range(node_order.max() + 1):
+            self._run_lstm(n, h, c, h_sum, features, node_order, adjacency_list, edge_order)
 
         return h, c
 
-    def _run_lstm(self, iteration, h, c, h_sum, features, node_evaluation_order, adjacency_list, edge_evaluation_order):
+    def _run_lstm(self, iteration, h, c, h_sum, features, node_order, adjacency_list, edge_order):
         '''Helper function to evaluate all tree nodes currently able to be evaluated.
         '''
         # N is the number of nodes in the tree
@@ -64,15 +64,15 @@ class TreeLSTM(torch.nn.Module):
         # F is the number of features in each node
         # M is the number of hidden neurons in the network
 
-        # node_evaluation_order is a tensor of size N x 1
-        # edge_evaluation_order is a tensor of size E x 1
+        # node_order is a tensor of size N x 1
+        # edge_order is a tensor of size E x 1
         # features is a tensor of size N x F
         # adjacency_list is a tensor of size E x 2
 
         # node_mask is a tensor of size N x 1
-        node_mask = node_evaluation_order == iteration
+        node_mask = node_order == iteration
         # edge_mask is a tensor of size E x 1
-        edge_mask = edge_evaluation_order == iteration
+        edge_mask = edge_order == iteration
 
         # x is a tensor of size n x F
         x = features[node_mask, :]
