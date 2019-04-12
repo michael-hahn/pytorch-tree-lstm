@@ -95,7 +95,8 @@ class TreeLSTM(torch.nn.Module):
             child_c = c[child_indexes, :]
 
             # Add child hidden states to parent offset locations
-            h_sum[parent_indexes, :] += h[child_indexes, :]
+            for pindex, cindex in zip(parent_indexes, child_indexes):
+                h_sum[pindex, :] += h[cindex, :]
 
         # i, o and u are tensors of size n x M
         iou = self.W_iou(x) + self.U_iou(h_sum[node_mask, :])
