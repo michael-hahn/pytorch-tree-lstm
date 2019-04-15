@@ -1,2 +1,5 @@
 .mypy_cache/
 .pytest_cache/
+build/
+dist/
+pytorch_tree_lstm.egg-info/

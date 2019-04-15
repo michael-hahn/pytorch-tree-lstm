@@ -9,10 +9,12 @@ setuptools.setup(
     author="Jordan Dawe",
     author_email="jordan.dawe@unbounce.com",
     description="A Tree-LSTM model package for PyTorch",
+    install_requires=['numpy', 'pytorch'],
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/unbounce/pytorch-tree-lstm",
     packages=setuptools.find_packages(),
+    python_requires='>=3',
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3",
