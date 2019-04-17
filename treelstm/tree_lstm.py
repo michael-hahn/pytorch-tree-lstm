@@ -119,6 +119,7 @@ class TreeLSTM(torch.nn.Module):
             fc = f * child_c
 
             # Add the calculated f values to the parent's memory cell state
-            c[parent_indexes, :] += fc
+            for cindex, pindex in enumerate(parent_indexes):
+                c[pindex, :] += fc[cindex, :]
 
         h[node_mask, :] = o * torch.tanh(c[node_mask])
