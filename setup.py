@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pytorch-tree-lstm",
-    version="0.1.0",
+    version="0.1.1",
     author="Jordan Dawe",
     author_email="jordan.dawe@unbounce.com",
     description="A Tree-LSTM model package for PyTorch",
